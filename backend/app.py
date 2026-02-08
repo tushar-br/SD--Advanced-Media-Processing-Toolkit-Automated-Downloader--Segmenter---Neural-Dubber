@@ -181,30 +181,29 @@ def process():
         final_filename = f"{clean_title}{final_suffix}.mp4"
         
         if IS_VERCEL:
-            # VERCEL: Move to accessible folder & Return URL
-            vercel_dest = os.path.join(DOWNLOAD_FOLDER, final_filename)
-            shutil.move(processed_path, vercel_dest)
-            return jsonify({
-                'success': True,
-                'vercel': True,
-                'download_url': f"/api/download_file?file={final_filename}", 
-                'filename': final_filename
-            })
+            # VERCEL: Stream file DIRECTLY (Solves 404 Error)
+            # We don't move to download folder, we just stream from temp
+            return send_file(processed_path, as_attachment=True, download_name=final_filename)
+
         else:
             # LOCAL: Move to Desktop
             local_dest = os.path.join(DOWNLOAD_FOLDER, final_filename)
             if os.path.exists(local_dest): local_dest = os.path.join(DOWNLOAD_FOLDER, f"{clean_title}_{ts}{final_suffix}.mp4")
             shutil.move(processed_path, local_dest)
             
-            # Cleanup Temp
-            for f in os.listdir(TEMP_DIR):
-                try: os.remove(os.path.join(TEMP_DIR, f))
-                except: pass
-                
             return jsonify({'success': True, 'vercel': False, 'files': [{'filename': os.path.basename(local_dest)}]})
 
     except Exception as e:
+        print(f"Error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    
+    finally:
+        # CLEANUP (Always runs, keeps Vercel /tmp clean)
+        # Note: On Vercel send_file might need the file to exist, so we rely on Vercel's auto cleanup
+        # But for Local, we must clean temp
+        if not IS_VERCEL and os.path.exists(TEMP_DIR):
+             try: shutil.rmtree(TEMP_DIR)
+             except: pass
 
 @app.route('/api/download_file')
 def download_file():

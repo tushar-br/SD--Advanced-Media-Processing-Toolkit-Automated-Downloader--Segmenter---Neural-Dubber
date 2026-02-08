@@ -53,10 +53,29 @@ function App() {
                 }), headers: { 'Content-Type': 'application/json' }
             });
             clearInterval(timer);
-            const result = await res.json();
-            if (!result.success) throw new Error(result.error);
-            setProgress(100); setFiles(result.files);
-            setTimeout(() => setScreen('results'), 1000);
+
+            // CHECK CONTENT TYPE (JSON vs BLOB)
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                // LOCAL MODE (JSON)
+                const result = await res.json();
+                if (!result.success) throw new Error(result.error);
+                setProgress(100); setFiles(result.files);
+                setTimeout(() => setScreen('results'), 1000);
+            } else {
+                // VERCEL MODE (BLOB FILE)
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = "Media_Toolkit_Video.mp4"; // Default Name
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setProgress(100);
+                setFiles({ vercel: true }); // Special flag for UI
+                setTimeout(() => setScreen('results'), 1000);
+            }
         } catch (err) { clearInterval(timer); setError(err.message); setScreen('preview'); }
     };
 
