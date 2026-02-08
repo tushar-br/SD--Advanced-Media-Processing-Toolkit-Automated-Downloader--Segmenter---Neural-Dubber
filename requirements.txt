@@ -8,8 +8,7 @@ gtts
 pydub
 gunicorn
 werkzeug
-imageio==2.4.1
-imageio-ffmpeg==0.4.9
-decorator==4.4.2
-proglog==0.1.9
+decorator>=4.4.2
+proglog
 tqdm
+# Removed strict imageio restriction to fix Vercel build
