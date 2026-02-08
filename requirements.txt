@@ -1,0 +1,7 @@
+
+Flask
+flask-cors
+# Use specific version or just latest
+yt-dlp>=2024.10.0
+moviepy
+werkzeug

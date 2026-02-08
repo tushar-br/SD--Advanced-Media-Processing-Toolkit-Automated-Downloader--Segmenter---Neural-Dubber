@@ -176,16 +176,37 @@ function App() {
 
     // RENDER: RESULTS
     if (screen === 'results') {
+        const isVercel = files.vercel || (files.length > 0 && files[0].url);
+
         return (
             <div className="container animate-fade">
                 <Header title="Success!" />
                 <div className="card" style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '4rem', marginBottom: 20 }}>✅</div>
-                    <h2 style={{ color: '#10b981' }}>Files Saved to Desktop!</h2>
-                    <div className="file-list">
-                        {files.map((f, i) => <div className="file-item" key={i}>📄 {f.filename}</div>)}
-                    </div>
-                    <button className="btn-primary" onClick={reset}>Process Another Video</button>
+
+                    {isVercel ? (
+                        <>
+                            <h2 style={{ color: '#10b981' }}>File Ready for Download!</h2>
+                            <p>Click below to save to your device.</p>
+                            <a
+                                href={files.download_url}
+                                target="_blank"
+                                className="btn-primary"
+                                style={{ display: 'block', marginTop: 20, textDecoration: 'none', lineHeight: '50px' }}
+                            >
+                                ⬇️ Click to Save File
+                            </a>
+                        </>
+                    ) : (
+                        <>
+                            <h2 style={{ color: '#10b981' }}>Files Saved to Desktop!</h2>
+                            <div className="file-list">
+                                {files.map((f, i) => <div className="file-item" key={i}>📄 {f.filename}</div>)}
+                            </div>
+                        </>
+                    )}
+
+                    <button className="btn-secondary" style={{ marginTop: 20, width: '100%' }} onClick={reset}>Process Another Video</button>
                 </div>
             </div>
         );
