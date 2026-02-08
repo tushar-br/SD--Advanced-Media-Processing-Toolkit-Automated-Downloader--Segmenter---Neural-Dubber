@@ -1,6 +1,7 @@
 
 const { useState, useEffect } = React;
-const API_Base = "http://localhost:5000/api";
+// AUTOMATIC DETECTION (Works on Local + Vercel)
+const API_Base = "/api";
 
 function App() {
     // STATE
