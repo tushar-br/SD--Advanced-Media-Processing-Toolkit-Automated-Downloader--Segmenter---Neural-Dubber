@@ -7,7 +7,7 @@
     <title>Media Toolkit (React App)</title>
 
     <!-- Link CSS -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- Load React, ReactDOM, Babel (via CDN) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -22,7 +22,7 @@
     <div id="root"></div>
 
     <!-- Load Main React App logic (JSX) -->
-    <script type="text/babel" src="/static/js/App.jsx"></script>
+    <script type="text/babel" src="{{ url_for('static', filename='js/App.jsx') }}"></script>
 </body>
 
 </html>

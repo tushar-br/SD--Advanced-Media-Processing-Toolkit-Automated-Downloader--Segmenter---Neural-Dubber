@@ -4,35 +4,36 @@ import os
 import shutil
 import yt_dlp
 from datetime import datetime
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
-from gtts import gTTS
 
 # ============================================
-# FLASK SERVER (HYBRID: LOCAL + VERCEL)
+# FLASK SERVER (VERCEL OPTIMIZED)
 # ============================================
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Use Absolute Paths for Templates/Static to avoid Vercel path errors
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
 # DETECT ENVIRONMENT
 IS_VERCEL = os.environ.get('VERCEL') == '1'
 
 # PATHS
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if IS_VERCEL:
-    # Vercel: Use /tmp (Read/Write Allowed)
     TEMP_DIR = "/tmp/processing"
     DOWNLOAD_FOLDER = "/tmp/downloads"
 else:
-    # Local: Use Project Folder & Desktop
     TEMP_DIR = os.path.join(BASE_DIR, 'temp_processing')
     DESKTOP_PATH = os.path.join(os.path.expanduser('~'), 'Desktop')
     DOWNLOAD_FOLDER = os.path.join(DESKTOP_PATH, 'Media_Toolkit_Downloads')
 
-# Init Folders
-for d in [TEMP_DIR, DOWNLOAD_FOLDER]:
-    if os.path.exists(d) and not IS_VERCEL: shutil.rmtree(d) # Clean start locally
-    os.makedirs(d, exist_ok=True)
+# Init Folders (Only if not Vercel, or inside route)
+if not IS_VERCEL:
+    for d in [TEMP_DIR, DOWNLOAD_FOLDER]:
+        if os.path.exists(d): shutil.rmtree(d)
+        os.makedirs(d, exist_ok=True)
 
 # -------------------------------------------------------------
 # ROUTES
@@ -40,6 +41,10 @@ for d in [TEMP_DIR, DOWNLOAD_FOLDER]:
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/health')
+def health():
+    return "OK", 200
 
 @app.route('/api/video-info', methods=['POST'])
 def video_info():
@@ -91,17 +96,25 @@ def video_info():
 @app.route('/api/process', methods=['POST'])
 def process():
     try:
+        # LAZY IMPORTS (Prevents Vercel Crash on Startup)
+        from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
+        from gtts import gTTS
+        import imageio_ffmpeg
+
+        # Ensure folders exist in Vercel environment
+        if IS_VERCEL:
+            os.makedirs(TEMP_DIR, exist_ok=True)
+            os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+
         data = request.json
         url = data.get('url')
         selected_fmt = data.get('format', 'best')
         enable_dubber = data.get('enable_dubber', False)
         enable_segmenter = data.get('enable_segmenter', False)
         
-        # 1. SETUP FFMPEG
-        import imageio_ffmpeg
         ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
-        # 2. DOWNLOAD
+        # DOWNLOAD
         ts = datetime.now().strftime("%H%M%S")
         temp_filename = f"temp_{ts}.mp4"
         temp_path = os.path.join(TEMP_DIR, temp_filename)
@@ -126,7 +139,7 @@ def process():
             info = ydl.extract_info(url, download=True)
             video_title = info.get('title', 'video')
 
-        # 3. PROCESSING (MoviePy)
+        # PROCESSING
         processed_path = temp_path
         final_suffix = ""
 
@@ -140,7 +153,7 @@ def process():
                 if enable_dubber:
                     uploader = info.get('uploader', 'Unknown')
                     clean_text = "".join([c for c in video_title if c.isalnum() or c in " .,!?'"])
-                    tts_text = f"Welcome. Watching {clean_text}, by {uploader}. Processed by Neural Dub Engine."
+                    tts_text = f"Welcome. Watching {clean_text}. AI Dub engine active."
                     
                     tts_file = os.path.join(TEMP_DIR, "dub.mp3")
                     tts = gTTS(text=tts_text, lang='en', tld='co.uk')
@@ -163,7 +176,7 @@ def process():
                 print(f"Processing Error: {e}")
                 processed_path = temp_path
 
-        # 4. FINALIZE (Local vs Vercel)
+        # FINALIZE
         clean_title = "".join([c for c in video_title if c.isalnum() or c in (' ','-','_')]).rstrip()
         final_filename = f"{clean_title}{final_suffix}.mp4"
         
