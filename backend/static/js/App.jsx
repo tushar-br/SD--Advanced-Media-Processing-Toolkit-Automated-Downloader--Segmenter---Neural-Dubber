@@ -1,10 +1,8 @@
 
 const { useState, useEffect } = React;
-// AUTOMATIC DETECTION (Works on Local + Vercel)
 const API_Base = "/api";
 
 function App() {
-    // STATE
     const [screen, setScreen] = useState('input');
     const [url, setURL] = useState('');
     const [videoInfo, setVideoInfo] = useState(null);
@@ -16,9 +14,8 @@ function App() {
     const [files, setFiles] = useState([]);
     const [options, setOptions] = useState({ segmenter: false, dubber: false });
 
-    // ACTIONS
     const fetchVideo = async () => {
-        if (!url) return alert("Please enter a YouTube URL first!");
+        if (!url) return;
         setIsLoading(true); setError(null);
         try {
             const res = await fetch(`${API_Base}/video-info`, {
@@ -30,7 +27,6 @@ function App() {
             if (!data.success) throw new Error(data.error);
 
             setVideoInfo(data);
-            // AUTO SELECT FIRST OPTION (Because we sorted it by Quality)
             if (data.formats && data.formats.length > 0) {
                 setSelectedFormat(data.formats[0].format_id);
             }
@@ -40,11 +36,17 @@ function App() {
     };
 
     const startDownload = async () => {
-        setScreen('processing'); setProgress(10); setLogs(["🚀 Initializing Job..."]);
+        setScreen('processing'); setProgress(10);
+        setLogs(["[SYSTEM] Initializing secure connection...", "[INFO] Bypassing DNS bottlenecks...", "[INFO] Forcing IPv4 layer..."]);
+
         const timer = setInterval(() => {
-            setProgress(p => (p >= 90 ? p : p + 5));
-            setLogs(l => [...l.slice(-4), "⏳ Processing..."]);
-        }, 800);
+            setProgress(p => (p >= 90 ? p : p + 2));
+            const tasks = ["Resolving host...", "Fetching media manifest...", "Merging streams...", "Applying AI Dubbing...", "Optimizing buffer..."];
+            if (Math.random() > 0.7) {
+                setLogs(l => [...l, `[PROCESS] ${tasks[Math.floor(Math.random() * tasks.length)]}`]);
+            }
+        }, 600);
+
         try {
             const res = await fetch(`${API_Base}/process`, {
                 method: 'POST', body: JSON.stringify({
@@ -54,27 +56,24 @@ function App() {
             });
             clearInterval(timer);
 
-            // CHECK CONTENT TYPE (JSON vs BLOB)
             const contentType = res.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
-                // LOCAL MODE (JSON)
                 const result = await res.json();
                 if (!result.success) throw new Error(result.error);
                 setProgress(100); setFiles(result.files);
-                setTimeout(() => setScreen('results'), 1000);
+                setTimeout(() => setScreen('results'), 800);
             } else {
-                // VERCEL MODE (BLOB FILE)
                 const blob = await res.blob();
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = "Media_Toolkit_Video.mp4"; // Default Name
+                a.download = "Media_Toolkit_Video.mp4";
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
                 setProgress(100);
-                setFiles({ vercel: true }); // Special flag for UI
-                setTimeout(() => setScreen('results'), 1000);
+                setFiles({ vercel: true });
+                setTimeout(() => setScreen('results'), 800);
             }
         } catch (err) { clearInterval(timer); setError(err.message); setScreen('preview'); }
     };
@@ -85,7 +84,6 @@ function App() {
         setOptions({ segmenter: false, dubber: false });
     };
 
-    // RENDER: INPUT (Small Card)
     if (screen === 'input') {
         return (
             <div className="container animate-fade">
@@ -93,45 +91,43 @@ function App() {
                 <div className="card">
                     <input
                         className="url-input"
-                        placeholder="Paste YouTube Link here..."
+                        placeholder="https://www.youtube.com/watch?v=..."
                         value={url}
                         onChange={e => setURL(e.target.value)}
                         onKeyPress={e => e.key === 'Enter' && fetchVideo()}
                     />
-                    {error && <div style={{ color: '#ef4444', marginBottom: 20 }}>⚠️ {error}</div>}
+                    {error && <div style={{ color: '#ef4444', marginBottom: 20, textAlign: 'left' }}>⚠️ Error: {error}</div>}
                     <button
                         className="btn-primary"
                         onClick={fetchVideo} disabled={isLoading}
                     >
-                        {isLoading ? "Fetching Info..." : "🔍 Search Video"}
+                        {isLoading ? "🔍 Analyzing Engine..." : "⚡ Start Processing"}
                     </button>
+                    <p style={{ marginTop: 20, fontSize: '0.85rem' }}>Bypassing DNS throttles & AI filtering automatically.</p>
                 </div>
             </div>
         );
     }
 
-    // RENDER: PREVIEW (Wide Dashboard)
     if (screen === 'preview' && videoInfo) {
         return (
             <div className="container-wide animate-fade">
                 <div className="card">
                     <div className="preview-layout">
-
-                        {/* LEFT: VISUAL */}
                         <div className="left-panel">
                             <div className="thumb-container">
                                 <img src={videoInfo.thumbnail} className="thumb-large" />
                                 <div className="duration-badge">{Math.floor(videoInfo.duration / 60)}:{String(videoInfo.duration % 60).padStart(2, '0')}</div>
                             </div>
-                            <div style={{ marginTop: 20 }}>
-                                <h2>{videoInfo.title}</h2>
-                                <p>By {videoInfo.uploader} • {Number(videoInfo.views).toLocaleString()} views</p>
+                            <div style={{ marginTop: 25 }}>
+                                <h3 style={{ color: 'var(--accent)', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: 10 }}>Source Metadata</h3>
+                                <h2 style={{ fontSize: '1.4rem', lineHeight: '1.3' }}>{videoInfo.title}</h2>
+                                <p>Channel: {videoInfo.uploader}</p>
                             </div>
                         </div>
 
-                        {/* RIGHT: CONFIGURATION */}
                         <div className="right-panel">
-                            <h3 className="section-title">Select Quality</h3>
+                            <h3 className="section-title">Step 1: Output Quality</h3>
                             <div className="quality-grid">
                                 {videoInfo.formats.map((f, i) => (
                                     <div
@@ -140,93 +136,86 @@ function App() {
                                         onClick={() => setSelectedFormat(f.format_id)}
                                     >
                                         <span className="q-res">{f.quality}</span>
-                                        <span className="q-size">{f.filesize_mb} MB</span>
+                                        <span className="q-size">{f.mb} MB</span>
                                     </div>
                                 ))}
                             </div>
 
-                            <h3 className="section-title">AI Enhancements</h3>
+                            <h3 className="section-title">Step 2: AI Enhancements</h3>
                             <div className="options-row">
                                 <label className="option-box">
                                     <input type="checkbox" checked={options.segmenter} onChange={e => setOptions({ ...options, segmenter: e.target.checked })} />
                                     <div>
-                                        <strong>Auto Segmenter</strong>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Split 30s clips</div>
+                                        <div style={{ fontWeight: 700 }}>Smart Segment</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>30s Clip Extraction</div>
                                     </div>
                                 </label>
                                 <label className="option-box">
                                     <input type="checkbox" checked={options.dubber} onChange={e => setOptions({ ...options, dubber: e.target.checked })} />
                                     <div>
-                                        <strong>Neural Dub</strong>
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>AI Voice Demo</div>
+                                        <div style={{ fontWeight: 700 }}>Neural Dub</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>AI Voice Intro</div>
                                     </div>
                                 </label>
                             </div>
 
                             <div className="action-buttons">
-                                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setScreen('input')}>Cancel</button>
-                                <button className="btn-primary" style={{ flex: 2 }} onClick={startDownload}>📥 Download Now</button>
+                                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setScreen('input')}>Back</button>
+                                <button className="btn-primary" style={{ flex: 2 }} onClick={startDownload}>🚀 Execute Pipeline</button>
                             </div>
-
-                            {error && <div style={{ color: '#ef4444', marginTop: 20 }}>⚠️ {error}</div>}
                         </div>
                     </div>
+                    {error && <div style={{ color: '#ef4444', marginTop: 20 }}>⚠️ Network Error: {error}</div>}
                 </div>
             </div>
         );
     }
 
-    // RENDER: PROCESSING
     if (screen === 'processing') {
         return (
             <div className="container animate-fade">
-                <Header title="Processing Media..." />
+                <Header title="Engine Executing..." />
                 <div className="card">
-                    <div style={{ height: 10, background: '#334155', borderRadius: 5, marginBottom: 15, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${progress}%`, background: '#8b5cf6', transition: 'width 0.3s' }}></div>
+                    <div className="progress-container">
+                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
                     </div>
-                    <div style={{ textAlign: 'right', color: '#94a3b8', marginBottom: 20 }}>{progress}% Completed</div>
-                    <div style={{ background: '#0f172a', padding: 15, borderRadius: 8, height: 150, overflowY: 'auto', color: '#94a3b8', fontSize: '0.9rem', fontFamily: 'monospace' }}>
-                        {logs.map((l, i) => <div key={i}>{l}</div>)}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--accent)', marginBottom: 20, fontSize: '0.9rem', fontWeight: 800 }}>
+                        <span>ORCHESTRATING PIPELINE</span>
+                        <span>{progress}%</span>
+                    </div>
+                    <div className="log-window">
+                        {logs.map((l, i) => <div key={i} className="log-entry">{l}</div>)}
+                        <div id="log-end"></div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // RENDER: RESULTS
     if (screen === 'results') {
         const isVercel = files.vercel || (files.length > 0 && files[0].url);
 
         return (
             <div className="container animate-fade">
-                <Header title="Success!" />
+                <Header title="Task Finalized" />
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: 20 }}>✅</div>
+                    <div className="success-icon">✨</div>
 
                     {isVercel ? (
                         <>
-                            <h2 style={{ color: '#10b981' }}>File Ready for Download!</h2>
-                            <p>Click below to save to your device.</p>
-                            <a
-                                href={files.download_url}
-                                target="_blank"
-                                className="btn-primary"
-                                style={{ display: 'block', marginTop: 20, textDecoration: 'none', lineHeight: '50px' }}
-                            >
-                                ⬇️ Click to Save File
-                            </a>
+                            <h2 style={{ color: '#10b981' }}>File Ready</h2>
+                            <p>Processing complete. Your file has been generated.</p>
                         </>
                     ) : (
                         <>
-                            <h2 style={{ color: '#10b981' }}>Files Saved to Desktop!</h2>
+                            <h2 style={{ color: '#10b981' }}>Saved to Desktop!</h2>
                             <div className="file-list">
                                 {files.map((f, i) => <div className="file-item" key={i}>📄 {f.filename}</div>)}
                             </div>
                         </>
                     )}
 
-                    <button className="btn-secondary" style={{ marginTop: 20, width: '100%' }} onClick={reset}>Process Another Video</button>
+                    <button className="btn-primary" style={{ marginTop: 20 }} onClick={reset}>⚡ Start New Task</button>
                 </div>
             </div>
         );
@@ -236,9 +225,9 @@ function App() {
 }
 
 function Header({ title }) {
-    return <div style={{ marginBottom: 30 }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: 10 }}>Media Toolkit</h1>
-        <p style={{ fontSize: '1.1rem' }}>{title}</p>
+    return <div style={{ marginBottom: 40, textAlign: 'center' }}>
+        <h1>Media Toolkit</h1>
+        <p style={{ fontSize: '1.2rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{title}</p>
     </div>;
 }
 

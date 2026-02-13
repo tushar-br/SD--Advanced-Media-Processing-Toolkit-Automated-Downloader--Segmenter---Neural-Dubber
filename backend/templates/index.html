@@ -4,25 +4,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Toolkit (React App)</title>
+    <meta name="description"
+        content="Advanced Media Processing Toolkit - Download, Segment, and AI Dub YouTube videos.">
+    <title>Media Toolkit | AI Powered Pipeline</title>
 
-    <!-- Link CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Fallback Style for Instant Loading Appearance -->
+    <style>
+        body {
+            background: #020617;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        #root:empty::after {
+            content: "Initializing AI Processing Engine...";
+            font-size: 1.2rem;
+            opacity: 0.5;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+
+    <!-- Link Premium CSS with Cache Busting -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.1">
 
     <!-- Load React, ReactDOM, Babel (via CDN) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Outfit & Inter for premium feel -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600;700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
     <div id="root"></div>
 
     <!-- Load Main React App logic (JSX) -->
-    <script type="text/babel" src="{{ url_for('static', filename='js/App.jsx') }}"></script>
+    <script type="text/babel" src="{{ url_for('static', filename='js/App.jsx') }}?v=1.0.1"></script>
 </body>
 
 </html>

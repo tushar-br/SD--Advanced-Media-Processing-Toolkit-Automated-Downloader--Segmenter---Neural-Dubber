@@ -27,8 +27,8 @@ if not exist "backend\installed.flag" (
 )
 
 REM ALWAYS UPDATE YT-DLP (Important for YouTube fixes)
-echo [INFO] Checking for yt-dlp updates...
-pip install --upgrade yt-dlp --quiet
+echo [INFO] Checking for yt-dlp updates (Skip if no internet)...
+pip install --upgrade yt-dlp --quiet --timeout 10 --retries 1
 
 REM 3. OPEN BROWSER (Wait a bit for server)
 echo [INFO] Opening http://localhost:5000...

@@ -11,4 +11,3 @@ werkzeug
 decorator>=4.4.2
 proglog
 tqdm
-# Removed strict imageio restriction to fix Vercel build

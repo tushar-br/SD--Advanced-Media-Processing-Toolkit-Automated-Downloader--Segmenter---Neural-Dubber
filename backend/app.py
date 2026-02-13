@@ -57,8 +57,16 @@ def video_info():
             'ignoreerrors': True,
             'quiet': True,
             'extract_flat': 'in_playlist',
-            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web'],
+                    'skip': ['hls', 'dash']
+                }
+            },
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'source_address': '0.0.0.0', # Force IPv4 to avoid DNS/resolution issues on some Windows setups
+            'retries': 10,
+            'socket_timeout': 30
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -131,8 +139,18 @@ def process():
             'merge_output_format': 'mp4',
             'nocheckcertificate': True,
             'quiet': False,
-            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}, 
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web']
+                }
+            }, 
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'source_address': '0.0.0.0', 
+            'retries': 20,              # Increased retries
+            'fragment_retries': 20,     # Increased fragment retries
+            'socket_timeout': 120,      # Doubled timeout (2 minutes)
+            'buffersize': 1024*1024,    # 1MB buffer
+            'http_chunk_size': 10485760 # 10MB chunks to prevent connection drops
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
